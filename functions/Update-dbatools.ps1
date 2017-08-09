@@ -1,11 +1,10 @@
-Function Update-DbaTools
-{
-<#
-.SYNOPSIS
-Exported function. Updates dbatools. Deletes current copy and replaces it with freshest copy.
+Function Update-DbaTools {
+	<#
+		.SYNOPSIS
+			Exported function. Updates dbatools. Deletes current copy and replaces it with freshest copy.
 
-.DESCRIPTION
-Exported function. Updates dbatools. Deletes current copy and replaces it with freshest copy.
+		.DESCRIPTION
+			Exported function. Updates dbatools. Deletes current copy and replaces it with freshest copy.
 
 .PARAMETER Development
 Installs the current development branch of dbatools instead of the latest release.
