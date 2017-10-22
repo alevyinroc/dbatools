@@ -1,6 +1,5 @@
-Function Remove-DbaBackup
-{
-<#
+Function Remove-DbaBackup {
+	<#
 .SYNOPSIS
 Remove SQL Server backups from disk
 
@@ -58,19 +57,7 @@ Author: Chris Sommer, @cjsommer, www.cjsommer.com
 
 dbatools PowerShell module (https://dbatools.io, clemaire@gmail.com)
 Copyright (C) 2016 Chrissy LeMaire
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+License: GNU GPL v3 https://opensource.org/licenses/GPL-3.0
 
 .LINK
 https://dbatools.io/Remove-DbaBackup
@@ -101,17 +88,17 @@ It will also remove any backup folders that no longer contain backup files.
 
 
 #>
-	[CmdletBinding(SupportsShouldProcess=$true)]
+	[CmdletBinding(SupportsShouldProcess = $true)]
 	Param (
-		[parameter(Mandatory = $true,HelpMessage="Full path to the root level backup folder (ex. 'C:\SQL\Backups'")]
+		[parameter(Mandatory = $true, HelpMessage = "Full path to the root level backup folder (ex. 'C:\SQL\Backups'")]
 		[Alias("BackupFolder")]
-		[ValidateScript({Test-Path $_ -PathType 'Container'})]
+		[ValidateScript( {Test-Path $_ -PathType 'Container'})]
 		[string]$Path,
 
-		[parameter(Mandatory = $true,HelpMessage="Backup File extension to remove (ex. bak, trn, dif)")]
+		[parameter(Mandatory = $true, HelpMessage = "Backup File extension to remove (ex. bak, trn, dif)")]
 		[string]$BackupFileExtension ,
 
-		[parameter(Mandatory = $true,HelpMessage="Backup retention period. (ex. 24h, 7d, 4w, 6m)")]
+		[parameter(Mandatory = $true, HelpMessage = "Backup retention period. (ex. 24h, 7d, 4w, 6m)")]
 		[string]$RetentionPeriod ,
 
 		[parameter(Mandatory = $false)]
@@ -123,11 +110,9 @@ It will also remove any backup folders that no longer contain backup files.
 		[switch][Alias('Silent')]$EnableException
 	)
 
-	BEGIN
-	{
+	BEGIN {
 		### Local Functions
-		function Convert-UserFriendlyRetentionToDatetime
-		{
+		function Convert-UserFriendlyRetentionToDatetime {
 			[cmdletbinding()]
 			param (
 				[string]$UserFriendlyRetention
@@ -148,25 +133,24 @@ It will also remove any backup folders that no longer contain backup files.
 			#>
 
 			[int]$Length = ($UserFriendlyRetention).Length
-			$Value = ($UserFriendlyRetention).Substring(0,$Length-1)
-			$Units = ($UserFriendlyRetention).Substring($Length-1,1)
+			$Value = ($UserFriendlyRetention).Substring(0, $Length - 1)
+			$Units = ($UserFriendlyRetention).Substring($Length - 1, 1)
 
 			# Validate that $Units is an accepted unit of measure
-			if ( $Units -notin @('h','d','w','m') ) {
+			if ( $Units -notin @('h', 'd', 'w', 'm') ) {
 				throw "RetentionPeriod '$UserFriendlyRetention' units invalid! See Get-Help for correct formatting and examples."
 			}
 
 			# Validate that $Value is an INT
-			if ( ![int]::TryParse($Value,[ref]"") ) {
+			if ( ![int]::TryParse($Value, [ref]"") ) {
 				throw "RetentionPeriod '$UserFriendlyRetention' format invalid! See Get-Help for correct formatting and examples."
 			}
 
-			switch ($Units)
-			{
-				'h' { $UnitString = 'Hours'; [datetime]$ReturnDatetime = (Get-Date).AddHours(-$Value)  }
-				'd' { $UnitString = 'Days';  [datetime]$ReturnDatetime = (Get-Date).AddDays(-$Value)   }
-				'w' { $UnitString = 'Weeks'; [datetime]$ReturnDatetime = (Get-Date).AddDays(-$Value*7) }
-				'm' { $UnitString = 'Months';[datetime]$ReturnDatetime = (Get-Date).AddMonths(-$Value) }
+			switch ($Units) {
+				'h' { $UnitString = 'Hours'; [datetime]$ReturnDatetime = (Get-Date).AddHours( - $Value)  }
+				'd' { $UnitString = 'Days'; [datetime]$ReturnDatetime = (Get-Date).AddDays( - $Value)   }
+				'w' { $UnitString = 'Weeks'; [datetime]$ReturnDatetime = (Get-Date).AddDays( - $Value * 7) }
+				'm' { $UnitString = 'Months'; [datetime]$ReturnDatetime = (Get-Date).AddMonths( - $Value) }
 			}
 			$ReturnDatetime
 		}
@@ -178,8 +162,7 @@ It will also remove any backup folders that no longer contain backup files.
 		}
 
 	}
-	PROCESS
-	{
+	PROCESS {
 		# Process stuff
 		Write-Message -Message "Started" -Level 3 -EnableException $EnableException
 		Write-Message -Message "Removing backups from $Path" -Level 3 -EnableException $EnableException
@@ -187,7 +170,8 @@ It will also remove any backup folders that no longer contain backup files.
 		try {
 			$RetentionDate = Convert-UserFriendlyRetentionToDatetime -UserFriendlyRetention $RetentionPeriod
 			Write-Message -Message "Backup Retention Date set to $RetentionDate" -Level 5 -EnableException $EnableException
-		} catch {
+		}
+		catch {
 			Stop-Function -Message "Failed to interpret retention time!" -ErrorRecord $_
 		}
 
@@ -199,7 +183,8 @@ It will also remove any backup folders that no longer contain backup files.
 					$_
 				}
 			}
-		} else {
+		}
+		else {
 			Filter DbaArchiveBitFilter {
 				$_
 			}
@@ -210,16 +195,17 @@ It will also remove any backup folders that no longer contain backup files.
 		Get-ChildItem $Path -Filter "*.$BackupFileExtension" -File -Recurse -ErrorAction SilentlyContinue -ErrorVariable EnumErrors |
 			Where-Object LastWriteTime -lt $RetentionDate | DbaArchiveBitFilter |
 			Foreach-Object {
-				$file = $_
-				if ($PSCmdlet.ShouldProcess($file.Directory.FullName, "Removing backup file $($file.Name)")) {
-					try {
-						$file
-						$file | Remove-Item -Force -EA Stop
-					} catch {
-						Write-Message -Message "Failed to remove $file" -Level Warning -ErrorRecord $_
-					}
+			$file = $_
+			if ($PSCmdlet.ShouldProcess($file.Directory.FullName, "Removing backup file $($file.Name)")) {
+				try {
+					$file
+					$file | Remove-Item -Force -EA Stop
+				}
+				catch {
+					Write-Message -Message "Failed to remove $file" -Level Warning -ErrorRecord $_
 				}
 			}
+		}
 		if ($EnumErrors) {
 			Write-Message "Errors encountered enumerating files" -Level Warning -ErrorRecord $EnumErrors
 		}
@@ -229,28 +215,30 @@ It will also remove any backup folders that no longer contain backup files.
 			Write-Message -Message "Removing empty folders" -Level 3 -EnableException $EnableException
 			(Get-ChildItem -Directory -Path $Path -Recurse -ErrorAction SilentlyContinue -ErrorVariable EnumErrors).FullName |
 				Sort-Object -Descending |
-					Foreach-Object {
-						$OrigPath = $_
-						try {
-							$Contents = @(Get-ChildItem -Force $OrigPath -ErrorAction Stop)
-						} catch {
-							Write-Message -Message "Can't enumerate $OrigPath" -Level Warning -ErrorRecord $_
-						}
-						if ($Contents.Count -eq 0) {
-							return $_
-						}
-					} |
-						Foreach-Object {
-							$FolderPath = $_
-							if ($PSCmdlet.ShouldProcess($Path, "Removing empty folder .$($FolderPath.Replace($Path, ''))")) {
-								try {
-									$FolderPath
-									$FolderPath | Remove-Item -ErrorAction Stop
-								} catch {
-									Write-Message -Message "Failed to remove $FolderPath" -Level Warning -ErrorRecord $_
-								}
-							}
-						}
+				Foreach-Object {
+				$OrigPath = $_
+				try {
+					$Contents = @(Get-ChildItem -Force $OrigPath -ErrorAction Stop)
+				}
+				catch {
+					Write-Message -Message "Can't enumerate $OrigPath" -Level Warning -ErrorRecord $_
+				}
+				if ($Contents.Count -eq 0) {
+					return $_
+				}
+			} |
+				Foreach-Object {
+				$FolderPath = $_
+				if ($PSCmdlet.ShouldProcess($Path, "Removing empty folder .$($FolderPath.Replace($Path, ''))")) {
+					try {
+						$FolderPath
+						$FolderPath | Remove-Item -ErrorAction Stop
+					}
+					catch {
+						Write-Message -Message "Failed to remove $FolderPath" -Level Warning -ErrorRecord $_
+					}
+				}
+			}
 			if ($EnumErrors) {
 				Write-Message "Errors encountered enumerating folders" -Level Warning -ErrorRecord $EnumErrors
 			}
