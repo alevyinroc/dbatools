@@ -133,8 +133,8 @@ It will also remove any backup folders that no longer contain backup files.
 			#>
 
 			[int]$Length = ($UserFriendlyRetention).Length
-			$Value = ($UserFriendlyRetention).Substring(0, $Length - 1)
-			$Units = ($UserFriendlyRetention).Substring($Length - 1, 1)
+			$Value = ($UserFriendlyRetention).Substring(0, $Length-1)
+			$Units = ($UserFriendlyRetention).Substring($Length-1, 1)
 
 			# Validate that $Units is an accepted unit of measure
 			if ( $Units -notin @('h', 'd', 'w', 'm') ) {
@@ -147,10 +147,10 @@ It will also remove any backup folders that no longer contain backup files.
 			}
 
 			switch ($Units) {
-				'h' { $UnitString = 'Hours'; [datetime]$ReturnDatetime = (Get-Date).AddHours( - $Value)  }
-				'd' { $UnitString = 'Days'; [datetime]$ReturnDatetime = (Get-Date).AddDays( - $Value)   }
-				'w' { $UnitString = 'Weeks'; [datetime]$ReturnDatetime = (Get-Date).AddDays( - $Value * 7) }
-				'm' { $UnitString = 'Months'; [datetime]$ReturnDatetime = (Get-Date).AddMonths( - $Value) }
+				'h' { $UnitString = 'Hours'; [datetime]$ReturnDatetime = (Get-Date).AddHours(-$Value)  }
+				'd' { $UnitString = 'Days'; [datetime]$ReturnDatetime = (Get-Date).AddDays(-$Value)   }
+				'w' { $UnitString = 'Weeks'; [datetime]$ReturnDatetime = (Get-Date).AddDays(-$Value * 7) }
+				'm' { $UnitString = 'Months'; [datetime]$ReturnDatetime = (Get-Date).AddMonths(-$Value) }
 			}
 			$ReturnDatetime
 		}
