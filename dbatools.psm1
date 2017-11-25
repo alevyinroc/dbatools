@@ -116,9 +116,13 @@ if ($dbatoolsSystemUserNode.SerialImport) { $script:serialImport = $true }
 Write-ImportTime -Text  "Validated defines"
 #endregion Import Defines
 
-Get-ChildItem -Path "$script:PSModuleRoot\bin\*.dll" -Recurse | Unblock-File -ErrorAction SilentlyContinue
-Write-ImportTime -Text  "Unblocking Files"
-
+if ($PSVersionTable.Platform -ne "Unix") {
+	Get-ChildItem -Path "$script:PSModuleRoot\bin\*.dll" -Recurse | Unblock-File -ErrorAction SilentlyContinue
+	Write-ImportTime -Text  "Unblocking Files"
+}
+else {
+	Write-ImportTime -Text "Unblocking files is unnecessary"
+}
 if (-not ([Sqlcollaborative.Dbatools.dbaSystem.SystemHost]::ModuleImported)) {
 	. Import-ModuleFile "$script:PSModuleRoot\internal\scripts\smoLibraryImport.ps1"
 	Write-ImportTime -Text "Starting import SMO libraries"
