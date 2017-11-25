@@ -22,7 +22,7 @@ function Import-ModuleFile {
 	Param (
 		$Path
 	)
-	
+	$Path = $Path.Replace("\",[System.IO.Path]::DirectorySeparatorChar);
 	if ($script:doDotSource) { . $Path }
 	else { $ExecutionContext.InvokeCommand.InvokeScript($false, ([scriptblock]::Create([io.file]::ReadAllText($Path))), $null, $null)}
 }
@@ -139,7 +139,9 @@ if (-not ([Sqlcollaborative.Dbatools.dbaSystem.SystemHost]::ModuleImported)) {
 
 # Load our own custom library
 # Should always come before function imports
-. Import-ModuleFile "$script:PSModuleRoot\bin\library.ps1"
+Write-Verbose -Message "Look at me!";
+Write-Verbose $script:PSModuleRoot
+. Import-ModuleFile "$script:PSModuleRoot\bin\library.ps1";
 . Import-ModuleFile "$script:PSModuleRoot\bin\typealiases.ps1"
 Write-ImportTime -Text "Loading dbatools library"
 
