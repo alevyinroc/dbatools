@@ -135,6 +135,8 @@ function Copy-DbaAgentAlert {
                 }
             }
 
+            $destServerOperators = $destServer.JobServer.Operators.Name
+
             foreach ($serverAlert in $serverAlerts) {
                 $alertName = $serverAlert.name
                 $copyAgentAlertStatus = [pscustomobject]@{
@@ -147,6 +149,12 @@ function Copy-DbaAgentAlert {
                     DateTime          = [Sqlcollaborative.Dbatools.Utility.DbaDateTime](Get-Date)
                 }
                 if (($Alert -and $Alert -notcontains $alertName) -or ($ExcludeAlert -and $ExcludeAlert -contains $alertName)) {
+                    continue
+                }
+                $missingOperators = Compare-Object -ReferenceObject $serverAlert.Notifications.OperatorName -DifferenceObject $destServerOperators | where-object {$_.sideIndicator -eq "<="} | Select-Object -expandproperty InputObject
+
+                if ($null -ne $missingOperators) {
+                    Write-Message "One or more operators alerted by $alertName is not present at the destination. Alert will not be copied. Use Copy-DbaAgentOperator to copy the operator(s) to the destination. Missing operator(s): $($missingOperators -join ',')"
                     continue
                 }
 
